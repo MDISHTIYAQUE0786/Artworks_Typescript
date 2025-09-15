@@ -48,16 +48,15 @@ const useArtworks = (page: number, rows: number) => {
 
 export default function ArtworksTable() {
   const [page, setPage] = useState(1);
-  const [rows, setRows] = useState(5);  
+  const [rows, setRows] = useState(5);
   const [rowClick, setRowClick] = useState(true);
- 
   const [selectedIdsMap, setSelectedIdsMap] = useState<{ [key: number]: boolean }>({});
 
   const { data, totalRecords, loading } = useArtworks(page, rows);
 
   const op = useRef<OverlayPanel>(null);
   const [inputValue, setInputValue] = useState("");
- 
+
   const onPageChange = (event: any) => {
     setPage(event.page + 1);
     setRows(event.rows);
@@ -76,7 +75,8 @@ export default function ArtworksTable() {
       }}
     />
   );
- 
+
+  
   const handleSubmit = async () => {
     let count = parseInt(inputValue, 10);
     if (isNaN(count) || count <= 0) return;
@@ -87,8 +87,9 @@ export default function ArtworksTable() {
     const pageSize = rows;
 
     while (rowsToSelect > 0) {
-     
-      const res = await fetch(`https://api.artic.edu/api/v1/artworks?page=${currentPage}&limit=${pageSize}`);
+      const res = await fetch(
+        `https://api.artic.edu/api/v1/artworks?page=${currentPage}&limit=${pageSize}`
+      );
       const json = await res.json();
       const pageData: Artwork[] = json.data;
 
@@ -98,11 +99,12 @@ export default function ArtworksTable() {
 
       for (let i = 0; i < selectCount; i++) {
         newMap[pageData[i].id] = true;
- 
+
+      
         fetch(`https://api.artic.edu/api/v1/artworks/${pageData[i].id}`)
-          .then(res => res.json())
-          .then(response => console.log("Fetched row:", response))
-          .catch(err => console.error(err));
+          .then((res) => res.json())
+          .then((resp) => console.log("Fetched row:", resp))
+          .catch((err) => console.error(err));
       }
 
       rowsToSelect -= selectCount;
@@ -112,23 +114,21 @@ export default function ArtworksTable() {
     setSelectedIdsMap(newMap);
     op.current?.hide();
   };
-
  
-  const handleSelectionChange = (e: any) => {
+  const handleSelectionChange = (e: { value: Artwork[] }) => {
     const newMap = { ...selectedIdsMap };
 
-   
-    e.value.forEach((item: Artwork) => {
+    e.value.forEach((item) => {
       newMap[item.id] = true;
+
       fetch(`https://api.artic.edu/api/v1/artworks/${item.id}`)
-        .then(res => res.json())
-        .then(response => console.log("Fetched row:", response))
-        .catch(err => console.error(err));
+        .then((res) => res.json())
+        .then((resp) => console.log("Fetched row:", resp))
+        .catch((err) => console.error(err));
     });
 
-     
     data.forEach((item) => {
-      if (!e.value.includes(item)) newMap[item.id] = false;
+      if (!e.value.find((sel) => sel.id === item.id)) newMap[item.id] = false;
     });
 
     setSelectedIdsMap(newMap);
@@ -149,6 +149,7 @@ export default function ArtworksTable() {
         value={data}
         loading={loading}
         responsiveLayout="scroll"
+        selectionMode="multiple"   
         selection={data.filter((row) => selectedIdsMap[row.id])}
         onSelectionChange={handleSelectionChange}
         dataKey="id"
@@ -157,7 +158,6 @@ export default function ArtworksTable() {
         <Column
           header={overlayCheckboxHeader}
           selectionMode="multiple"
-          showSelectAll={false}
           headerStyle={{ width: "3rem" }}
         />
         <Column field="title" header="Title" />
